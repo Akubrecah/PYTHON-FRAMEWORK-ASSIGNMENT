@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from wordcloud import wordcloud 
+from wordcloud import WordCloud
 import re
 from collections import Counter
 import numpy as np
@@ -12,9 +12,9 @@ st.set_page_config(
     page_title = "CORD19 Data Explorer",
     page_icon = "🔬",
     layout = "wide",
-    inisital_sidebar_state = "expanded"
+    initial_sidebar_state = "expanded"
 )
-@set.cache_data
+@st.cache_data
 def load_data(file_path = 'data/CORD19_datasets.csv'):
     try:
         df = pd.read_csv(file_path)
@@ -30,18 +30,19 @@ def clean_data(df):
     # clean dataset
     df_clean = df.copy()
 
-    df_clean['publish_time'] = pd.to_datetime(df_clean['publish_time'], errors='coerce')
-    df_clean['publication_year'] = df_clean['publish_time'].dt.year
+    # Use 'last_updated' instead of 'publish_time'
+    df_clean['last_updated'] = pd.to_datetime(df_clean['last_updated'], errors='coerce')
+    df_clean['publication_year'] = df_clean['last_updated'].dt.year
     mode_year = df_clean['publication_year'].mode()[0] if not df_clean['publication_year'].mode().empty else 2020
     df_clean['publication_year'].fillna(mode_year, inplace=True)
     df_clean['publication_year'] = df_clean['publication_year'].astype(int)
     
     # Handle missing values
-    df_clean['abstract'] = df_clean['abstract'].fillna('No abstract available')
-    df_clean = df_clean.dropna(subset=['title'])
-    df_clean['journal'] = df_clean['journal'].fillna('Unknown Journal')
-    df_clean['abstract_word_count'] = df_clean['abstract'].apply(lambda x: len(str(x).split()))
-    df_clean['has_abstract'] = df_clean['abstract'] != 'No abstract available'
+    df_clean['description'] = df_clean['description'].fillna('No description available')
+    df_clean = df_clean.dropna(subset=['paper_title'])
+    df_clean['source_organization'] = df_clean['source_organization'].fillna('Unknown Organization')
+    df_clean['description_word_count'] = df_clean['description'].apply(lambda x: len(str(x).split()))
+    df_clean['has_description'] = df_clean['description'] != 'No description available'
     
     return df_clean
 
@@ -76,12 +77,12 @@ def main():
         value=(min_year, max_year)
     )
     
-    # Journal selector
-    journals = ['All'] + sorted(df_clean['journal'].value_counts().head(20).index.tolist())
-    selected_journal = st.sidebar.selectbox("Select journal:", journals)
+    # Organization selector (was 'journal')
+    organizations = ['All'] + sorted(df_clean['source_organization'].value_counts().head(20).index.tolist())
+    selected_organization = st.sidebar.selectbox("Select organization:", organizations)
     
-    # Abstract availability filter
-    abstract_filter = st.sidebar.radio("Abstract availability:", ['All', 'With Abstract', 'Without Abstract'])
+    # Description availability filter (was 'abstract')
+    description_filter = st.sidebar.radio("Description availability:", ['All', 'With Description', 'Without Description'])
     
     # Apply filters
     filtered_df = df_clean[
@@ -89,13 +90,13 @@ def main():
         (df_clean['publication_year'] <= year_range[1])
     ]
     
-    if selected_journal != 'All':
-        filtered_df = filtered_df[filtered_df['journal'] == selected_journal]
+    if selected_organization != 'All':
+        filtered_df = filtered_df[filtered_df['source_organization'] == selected_organization]
     
-    if abstract_filter == 'With Abstract':
-        filtered_df = filtered_df[filtered_df['has_abstract'] == True]
-    elif abstract_filter == 'Without Abstract':
-        filtered_df = filtered_df[filtered_df['has_abstract'] == False]
+    if description_filter == 'With Description':
+        filtered_df = filtered_df[filtered_df['has_description'] == True]
+    elif description_filter == 'Without Description':
+        filtered_df = filtered_df[filtered_df['has_description'] == False]
     
     # Main content
     st.header("Dataset Overview")
@@ -109,11 +110,11 @@ def main():
         st.metric("Years Covered", f"{year_range[0]} - {year_range[1]}")
     
     with col3:
-        st.metric("Unique Journals", filtered_df['journal'].nunique())
+        st.metric("Unique Organizations", filtered_df['source_organization'].nunique())
     
     with col4:
-        st.metric("Papers with Abstracts", 
-                 f"{filtered_df['has_abstract'].sum()} ({filtered_df['has_abstract'].mean() * 100:.1f}%)")
+        st.metric("Papers with Descriptions", 
+                 f"{filtered_df['has_description'].sum()} ({filtered_df['has_description'].mean() * 100:.1f}%)")
     
     # Visualizations
     st.header("Data Visualizations")
@@ -121,7 +122,7 @@ def main():
     # Create tabs for different visualizations
     tab1, tab2, tab3, tab4 = st.tabs([
         "Publication Trends", 
-        "Journal Analysis", 
+        "Organization Analysis",  # <-- change tab name for clarity
         "Word Analysis", 
         "Data Sample"
     ])
@@ -156,38 +157,38 @@ def main():
             st.info("Insufficient date data for monthly analysis")
     
     with tab2:
-        st.subheader("Journal Analysis")
+        st.subheader("Organization Analysis")
         
         col1, col2 = st.columns(2)
         
         with col1:
-            # Top journals
-            top_journals = filtered_df['journal'].value_counts().head(10)
+            # Top organizations
+            top_orgs = filtered_df['source_organization'].value_counts().head(10)
             
             fig, ax = plt.subplots(figsize=(8, 6))
-            ax.barh(range(len(top_journals)), top_journals.values, color='lightgreen')
-            ax.set_yticks(range(len(top_journals)))
-            ax.set_yticklabels(top_journals.index)
-            ax.set_xlabel('Number of Publications')
-            ax.set_title('Top 10 Journals by Publication Count')
+            ax.barh(range(len(top_orgs)), top_orgs.values, color='lightgreen')
+            ax.set_yticks(range(len(top_orgs)))
+            ax.set_yticklabels(top_orgs.index)
+            ax.set_xlabel('Number of Datasets')
+            ax.set_title('Top 10 Organizations by Dataset Count')
             plt.tight_layout()
             st.pyplot(fig)
         
         with col2:
-            # Journal statistics
-            journal_stats = pd.DataFrame({
-                'Journal': top_journals.index,
-                'Publications': top_journals.values,
-                'Percentage': (top_journals.values / len(filtered_df)) * 100
+            # Organization statistics
+            org_stats = pd.DataFrame({
+                'Organization': top_orgs.index,
+                'Datasets': top_orgs.values,
+                'Percentage': (top_orgs.values / len(filtered_df)) * 100
             })
-            st.dataframe(journal_stats, use_container_width=True)
+            st.dataframe(org_stats, use_container_width=True)
     
     with tab3:
         st.subheader("Word Frequency Analysis")
         
-        # Word cloud of titles
+        # Word cloud of paper titles
         if len(filtered_df) > 0:
-            all_titles = ' '.join(filtered_df['title'].dropna().astype(str))
+            all_titles = ' '.join(filtered_df['paper_title'].dropna().astype(str))
             words = re.findall(r'\w+', all_titles.lower())
             word_freq = Counter(words)
             
@@ -222,7 +223,7 @@ def main():
         
         # Data sample
         st.write(f"Showing 10 random papers from the filtered dataset ({len(filtered_df)} total):")
-        sample_data = filtered_df[['title', 'journal', 'publication_year', 'abstract_word_count']].sample(
+        sample_data = filtered_df[['paper_title', 'source_organization', 'publication_year', 'description_word_count']].sample(
             min(10, len(filtered_df))
         )
         st.dataframe(sample_data, use_container_width=True)
