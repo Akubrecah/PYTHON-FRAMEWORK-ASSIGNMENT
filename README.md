@@ -126,7 +126,7 @@ streamlit run cord19_streamlit.py
 
 ---
 
-## ⚡ Example Commands
+## Example Commands
 
 **Run analysis and save visualizations:**
 ```bash
