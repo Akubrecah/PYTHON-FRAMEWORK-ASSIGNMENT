@@ -4,7 +4,7 @@ This project provides a full workflow for exploring, cleaning, analyzing, and in
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 PYTHON FRAMEWORK ASSIGNMENT/
@@ -22,7 +22,7 @@ PYTHON FRAMEWORK ASSIGNMENT/
 
 ---
 
-## 📦 Installation
+## Installation
 
 1. **Clone the repository**  
    ```bash
@@ -46,7 +46,7 @@ PYTHON FRAMEWORK ASSIGNMENT/
 
 ---
 
-## 🧑‍💻 Usage
+## Usage
 
 ### 1. Data Analysis Script
 
@@ -82,14 +82,14 @@ streamlit run cord19_streamlit.py
 
 ---
 
-## 🖼️ Visualizations
+## Visualizations
 
 - All static visualizations from `cord19_analysis.py` are saved in the `images/` folder.
 - Each run saves a new image with an incrementing filename (e.g., `cord19_analysis.png`, `cord19_analysis_1.png`, ...).
 
 ---
 
-## 📝 Dataset Information
+## Dataset Information
 
 - **File:** `data/CORD19_datasets.csv`
 - **Columns used:**  
@@ -99,7 +99,7 @@ streamlit run cord19_streamlit.py
 
 ---
 
-## 🔑 Key Features
+## Key Features
 
 - **Data Exploration:**  
   - Shape, columns, missing values, and statistics.
@@ -115,7 +115,7 @@ streamlit run cord19_streamlit.py
 
 ---
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 - Python 3
 - pandas, numpy
@@ -140,7 +140,7 @@ streamlit run cord19_streamlit.py
 
 ---
 
-## 📋 Requirements
+## Requirements
 
 See `requirements.txt` for all dependencies:
 
@@ -156,13 +156,13 @@ numpy>=1.21.0
 
 ---
 
-## 📚 License
+## License
 
 This project is for educational and research purposes.  
 Dataset source: [CORD-19 Research Challenge](https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge)
 
 ---
 
-## 🙋‍♂️ Contact
+## Contact
 
 For questions or contributions, please open an issue or pull request.
